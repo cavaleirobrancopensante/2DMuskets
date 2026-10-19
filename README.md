@@ -1,5 +1,7 @@
 # 2D Muskets
 
+**Play in your browser: https://cavaleirobrancopensante.github.io/2DMuskets/**
+
 A top-down mobile arena shooter for Godot 4.7. You are a lone musketeer; waves of lizard warriors close in from the treeline. One ball, one shot, then a long reload.
 
 ## How to play
@@ -40,3 +42,11 @@ To add more frames later (e.g. a real walk cycle), drop extra PNGs in and add th
 2. *Project → Export → Add… → Android*, then export or one-click deploy.
 
 The project uses the Compatibility renderer and landscape (sensor) orientation for the widest device support.
+
+## Browser version
+
+Every push to `main` runs `.github/workflows/web.yml`, which exports the game with Godot 4.7 and publishes it to GitHub Pages. Updates go live a minute or two after the push (a browser that already had the page open may need a refresh). The current version is shown at the top of the game screen; see `CHANGELOG.md`.
+
+One-time setup: in the repo's *Settings → Pages*, set **Source** to **GitHub Actions**.
+
+To build the web version locally: *Project → Export → Web → Export Project* (needs the 4.7 export templates installed).

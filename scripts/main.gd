@@ -5,6 +5,9 @@ extends Node2D
 const ARENA := Rect2(0, 0, 2400, 1600)
 const SAVE_PATH := "user://best.save"
 
+var version: String = ProjectSettings.get_setting("application/config/version", "dev")
+var _went_fullscreen := false
+
 var world: Node2D
 var player: Player
 var camera: Camera2D
@@ -19,6 +22,7 @@ var between_waves := 0.0
 var score := 0
 var best := 0
 var kills := 0
+var started := false
 var game_over := false
 var game_over_time := 0.0
 var banner := ""
@@ -108,7 +112,9 @@ func _sfx(name: String, db := 0.0) -> void:
 
 
 func _process(delta: float) -> void:
-	if not game_over:
+	if not started:
+		pass
+	elif not game_over:
 		player.move_input = controls.get_move()
 		player.aim_input = controls.aim_vector
 		if Input.is_key_pressed(KEY_SPACE) and controls.aim_vector == Vector2.ZERO:
@@ -128,6 +134,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
 	if k and k.keycode == KEY_SPACE and not k.pressed:
 		player.release_aim()
+	if k and k.pressed and not started:
+		_start_game()
 	if k and k.pressed and game_over and game_over_time > 1.0:
 		get_tree().reload_current_scene()
 
@@ -239,8 +247,36 @@ func _on_player_died() -> void:
 
 
 func _on_tap() -> void:
+	_web_fullscreen()
+	if not started:
+		_start_game()
+		return
 	if game_over and game_over_time > 1.0:
 		get_tree().reload_current_scene()
+
+
+func _start_game() -> void:
+	started = true
+	controls.reset()
+
+
+## In a phone browser, the first tap goes fullscreen and locks landscape,
+## so the address bar doesn't eat the screen. Desktop browsers are left alone.
+func _web_fullscreen() -> void:
+	if _went_fullscreen or not OS.has_feature("web") or not DisplayServer.is_touchscreen_available():
+		return
+	_went_fullscreen = true
+	JavaScriptBridge.eval("""
+		(function(){
+			var el = document.documentElement;
+			var req = el.requestFullscreen || el.webkitRequestFullscreen;
+			if (!req) return;
+			var p = req.call(el);
+			if (p && p.then) p.then(function(){
+				if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function(){});
+			}).catch(function(){});
+		})();
+	""", true)
 
 
 func _show_banner(text: String) -> void:
@@ -267,10 +303,19 @@ func _draw_hud() -> void:
 	_text_right(font, Vector2(vs.x - 20, 72), "WAVE %d   BEST %d" % [wave, best], 18, Color(1, 1, 1, 0.7))
 
 	_draw_lizard_arrows(vs)
+	_text_center(font, Vector2(vs.x * 0.5, 24), "v" + version, 14, Color(1, 1, 1, 0.35))
 
 	if banner_time > 0.0:
 		var a := clampf(banner_time, 0.0, 1.0)
 		_text_center(font, Vector2(vs.x * 0.5, vs.y * 0.3), banner, 56, Color(1, 0.92, 0.7, a))
+
+	if not started:
+		hud.draw_rect(Rect2(Vector2.ZERO, vs), Color(0, 0, 0, 0.55))
+		_text_center(font, Vector2(vs.x * 0.5, vs.y * 0.34), "2D MUSKETS", 72, Color(0.95, 0.85, 0.7))
+		_text_center(font, Vector2(vs.x * 0.5, vs.y * 0.44), "Hold the line against the lizards", 26, Color.WHITE)
+		_text_center(font, Vector2(vs.x * 0.5, vs.y * 0.56), "Left thumb: march      Right thumb: hold to aim, release to fire", 20, Color(1, 1, 1, 0.75))
+		_text_center(font, Vector2(vs.x * 0.5, vs.y * 0.72), "Tap to begin", 30, Color(1, 0.85, 0.4, 0.6 + 0.4 * sin(Time.get_ticks_msec() / 250.0)))
+		return
 
 	if game_over:
 		hud.draw_rect(Rect2(Vector2.ZERO, vs), Color(0, 0, 0, minf(game_over_time, 0.6)))
