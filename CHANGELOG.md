@@ -2,6 +2,9 @@
 
 Bump `config/version` in `project.godot` (Project Settings → Application → Config → Version) for each release. The version shows in-game at the top of the screen, and every push to `main` republishes the browser build.
 
+## 1.1 — 2026-10-19
+- Fixed: on phones the march stick never appeared and every touch was read as aiming, so you couldn't move. The on-screen stick hints now show too.
+
 ## 1.0 — 2026-10-19
 - First playable: musketeer vs waves of lizards, twin-thumbstick touch controls.
 - Hold to aim (steadier the longer you hold), release to fire, reload between shots.
